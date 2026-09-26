@@ -46,6 +46,22 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Make mvnw executable
+        run: chmod +x order-service/mvnw
+
+      - name: Build with Maven
+        run: ./order-service/mvnw clean package -DskipTests -f order-service/pom.xml
+
+      - name: Run tests
+        run: ./order-service/mvnw test -f order-service/pom.xml
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/orders_db
+          SPRING_DATASOURCE_USERNAME: orders_user
+          SPRING_DATASOURCE_PASSWORD: orders_pass
+          SPRING_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          SPRING_DATA_REDIS_HOST: localhost
+          SPRING_DATA_REDIS_PORT: 6379
+
       - name: Build with Maven
         run: ./order-service/mvnw clean package -DskipTests -f order-service/pom.xml
 
