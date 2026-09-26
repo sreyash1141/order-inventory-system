@@ -5,6 +5,8 @@ import com.orderinventory.order.dto.OrderResponse;
 import com.orderinventory.order.entity.Order;
 import com.orderinventory.order.entity.OrderItem;
 import com.orderinventory.order.entity.OrderStatus;
+import com.orderinventory.order.event.OrderEventPublisher;
+import com.orderinventory.order.event.OrderPlacedEvent;
 import com.orderinventory.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final OrderEventPublisher orderEventPublisher;
 
     @Transactional
     public OrderResponse placeOrder(OrderRequest request) {
@@ -48,6 +51,17 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
         log.info("Order placed successfully: {}", saved.getId());
+
+        OrderPlacedEvent event = OrderPlacedEvent.builder()
+                .eventId(UUID.randomUUID())
+                .orderId(saved.getId())
+                .customerId(saved.getCustomerId())
+                .items(saved.getItems())
+                .totalAmount(saved.getTotalAmount())
+                .timestamp(saved.getCreatedAt())
+                .build();
+
+        orderEventPublisher.publishOrderPlaced(event);
 
         return toResponse(saved);
     }
